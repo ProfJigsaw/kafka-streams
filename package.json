@@ -1,0 +1,5 @@
+{
+  "name": "kafka-streams",
+  "private": true,
+  "dependencies": {}
+}
