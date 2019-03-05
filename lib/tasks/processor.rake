@@ -1,19 +1,27 @@
-KAFKA_CONFIG = {
+DEFAULT_CONFIG = {
   "bootstrap.servers": "localhost:9092",
   "enable.auto.commit": false,
   "auto.offset.reset": "earliest",
   "enable.partition.eof": false
 }
 
+def generate_producer
+  Rdkafka::Config.new(DEFAULT_CONFIG).producer
+end
+
+def generate_consumer(id)
+  Rdkafka::Config.new(DEFAULT_CONFIG.merge("group.id": id)).consumer
+end
+
 namespace :processor do
   task :create_topics do
-    `kafka-topics --create --topic=raw-page-views --zookeeper=127.0.0.1:2181 --partitions=8 --replication-factor=1`
-    `kafka-topics --create --topic=page-views --zookeeper=127.0.01:2181 --partitions=8 --replication-factor=1`
+    `kafka-topics --create --topic=raw-page-views --zookeeper=127.0.0.1:2181 --partitions=8`
+    `kafka-topics --create --topic=page-views --zookeeper=127.0.01:2181 --partitions=8`
   end
 
   task :import => :environment do
     puts 'Starting the importation'
-    producer = Rdkafka::Config.new(KAFKA_CONFIG).producer
+    producer = generate_producer
     Dir.glob('log/access/*') do |file|
       delivery_handles = []
       File.read(file).lines.each do |line|
@@ -27,15 +35,15 @@ namespace :processor do
       puts "Produced lines in #{file}, waiting for delivery"
       delivery_handles.each(&:wait)
     end
-    puts 'Imported all available logs in log/access'
+    puts 'Importation complete'
   end
 
   task :preprocess => :environment do
     puts 'Processor starting...'
     log_line_regex = %r{^(\S+) - - \[(\S+ \+\d{4})\] "(\S+ \S+ [^"]+)" (\d{3}) (\d+|-) "(.*?)" "([^"]+)"$}
     geoip = GeoIP.new('GeoLiteCity.dat')
-    producer = Rdkafka::Config.new(KAFKA_CONFIG).producer
-    consumer = Rdkafka::Config.new(KAFKA_CONFIG.merge("group.id": "preprocessor")).consumer
+    producer = generate_producer
+    consumer = generate_consumer("preprocessor")
     consumer.subscribe("raw-page-views")
     @last_tick_time = Time.now.to_i
     delivery_handles = []
@@ -75,7 +83,7 @@ namespace :processor do
   end
 
   task :aggregate => :environment do
-    consumer = Rdkafka::Config.new(KAFKA_CONFIG.merge("group.id": "processor")).consumer
+    consumer = generate_consumer("processor")
     consumer.subscribe("page-views")
     @count = 0
     @country_counts = Hash.new(0)
