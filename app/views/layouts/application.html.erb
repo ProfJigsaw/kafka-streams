@@ -6,8 +6,13 @@
     <%= csp_meta_tag %>
 
     <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag "https://www.gstatic.com/charts/loader.js" %>
     <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
-    <meta http-equiv="refresh" content="5">
+    <%
+=begin%>
+ <meta http-equiv="refresh" content="5"> 
+<%
+=end%>
   </head>
 
   <body>

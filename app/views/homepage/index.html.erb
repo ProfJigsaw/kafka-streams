@@ -1,17 +1,9 @@
-<% if @country_stats.any? %>
-<h1><%= number_with_delimiter @total_visit_count %> visits</h1>
+<h1>Kafka Tuts</h1>
 
-<table class="stats">
-    <% @country_stats.each do |country_stat| %>
-    <tr>
-      <th><%= truncate(country_stat.country_code, length: 20) %> </th>
-      <td>
-        <%= number_with_delimiter country_stat.visit_count %>
-        <div class="bar" style="width: <%= (country_stat.visit_count * 100) / @max_visit_count %>%"></div>
-      </td>
-    </tr>
-  <% end %>
-</table>
-<% else %>
-<h1>No stats yet</h1>
-<% end %>
+<h3>Country visits</h3>
+<br/>
+<h3>Geo charts: </h3>
+<%= geo_chart @map %>
+<br />
+<h3>Line chart:</h3>
+<%= line_chart @map %>
